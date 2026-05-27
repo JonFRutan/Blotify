@@ -48,7 +48,9 @@ def main():
         '--workpath', str(ROOT / 'build' / 'pyinst_work'),
         '--specpath', str(ROOT / 'build'),
         # Bundle static/ directory so the server works without external files
-        f'--add-data=static{sep}static',
+        # Use absolute source path — PyInstaller resolves relative paths against
+        # --specpath (our build/ dir), not the project root, so this would fail.
+        f'--add-data={ROOT / "static"}{sep}static',
         # FastAPI / uvicorn hidden imports
         '--hidden-import=uvicorn.logging',
         '--hidden-import=uvicorn.loops',
