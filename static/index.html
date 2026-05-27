@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blotify</title>
+  <style>
+    /* ── Reset & tokens ───────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg0:    #0d1117;
+      --bg1:    #161b22;
+      --bg2:    #21262d;
+      --bg3:    #30363d;
+      --accent: #1db954;
+      --acc2:   #1ed760;
+      --red:    #f85149;
+      --yellow: #d29922;
+      --blue:   #58a6ff;
+      --t0:     #e6edf3;
+      --t1:     #8b949e;
+      --t2:     #484f58;
+      --r:      8px;
+      --rl:     12px;
+      --sh:     0 4px 24px #0009;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg0);
+      color: var(--t0);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      overflow: hidden;
+    }
+
+    button { cursor: pointer; font: inherit; }
+    input, select { font: inherit; }
+
+    /* ── Layout ───────────────────────────────────────────── */
+    .layout {
+      display: grid;
+      grid-template-rows: 52px 1fr;
+      grid-template-columns: 300px 1fr;
+      grid-template-areas: "hd hd" "sb mn";
+      height: 100vh;
+    }
+
+    /* ── Header ───────────────────────────────────────────── */
+    header {
+      grid-area: hd;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 18px;
+      background: var(--bg1);
+      border-bottom: 1px solid var(--bg3);
+      -webkit-app-region: drag; /* drag window on macOS */
+      user-select: none;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -.3px;
+      -webkit-app-region: no-drag;
+    }
+
+    /* Logo placeholder — replace #logo-img src with your image */
+    #logo-img {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      object-fit: contain;
+      display: none; /* shown once src is set */
+    }
+    .logo-icon {
+      width: 28px; height: 28px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+    }
+
+    .ws-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--t2);
+      margin-left: auto;
+      transition: background .3s;
+      -webkit-app-region: no-drag;
+    }
+    .ws-dot.on { background: var(--accent); box-shadow: 0 0 5px var(--accent); }
+    .ws-label { font-size: 12px; color: var(--t1); -webkit-app-region: no-drag; }
+
+    /* ── Sidebar ──────────────────────────────────────────── */
+    aside {
+      grid-area: sb;
+      background: var(--bg1);
+      border-right: 1px solid var(--bg3);
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    aside::-webkit-scrollbar { width: 4px; }
+    aside::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 2px; }
+
+    .sec-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--t1);
+      margin-bottom: 10px;
+    }
+
+    /* ── Form controls ────────────────────────────────────── */
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field + .field { margin-top: 8px; }
+    .field label { font-size: 12px; color: var(--t1); font-weight: 500; }
+
+    .row { display: flex; gap: 6px; }
+    .row input { flex: 1; min-width: 0; }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      background: var(--bg2);
+      border: 1px solid var(--bg3);
+      border-radius: var(--r);
+      color: var(--t0);
+      padding: 7px 10px;
+      width: 100%;
+      outline: none;
+      transition: border-color .15s;
+    }
+    input:focus, select:focus { border-color: var(--accent); }
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238b949e'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 28px;
+    }
+
+    /* ── Checkbox grid ────────────────────────────────────── */
+    .cbgrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .cb-item {
+      display: flex; align-items: center; gap: 7px;
+      background: var(--bg2); border: 1px solid var(--bg3);
+      border-radius: 6px; padding: 6px 8px;
+      cursor: pointer; user-select: none;
+      transition: border-color .15s, background .15s;
+    }
+    .cb-item:hover:not(.locked) { background: var(--bg3); }
+    .cb-item.checked { border-color: var(--accent); background: #1db95418; }
+    .cb-item.locked  { opacity: .55; cursor: default; }
+
+    .cb-box {
+      width: 15px; height: 15px;
+      border: 2px solid var(--bg3); border-radius: 3px;
+      background: var(--bg0); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .15s;
+    }
+    .cb-item.checked .cb-box { background: var(--accent); border-color: var(--accent); }
+    .cb-box svg { display: none; }
+    .cb-item.checked .cb-box svg { display: block; }
+    .cb-label { font-size: 12px; line-height: 1.2; }
+
+    /* ── Collapse ─────────────────────────────────────────── */
+    .coll-hd {
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer; padding: 2px 0;
+    }
+    .coll-hd .chv { color: var(--t1); transition: transform .2s; }
+    .coll-hd.open .chv { transform: rotate(180deg); }
+    .coll-bd { display: none; padding-top: 10px; flex-direction: column; gap: 10px; }
+    .coll-bd.open { display: flex; }
+
+    /* ── Buttons ──────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border-radius: var(--r); border: none;
+      font-weight: 600; font-size: 13px; cursor: pointer;
+      transition: opacity .15s, background .15s;
+    }
+    .btn:disabled { opacity: .4; pointer-events: none; }
+    .btn-primary { background: var(--accent); color: #000; }
+    .btn-primary:hover { background: var(--acc2); }
+    .btn-ghost { background: var(--bg2); color: var(--t0); border: 1px solid var(--bg3); }
+    .btn-ghost:hover { background: var(--bg3); }
+    .btn-danger { background: transparent; color: var(--red); border: 1px solid #f8514933; }
+    .btn-danger:hover { background: #f8514912; }
+    .btn-icon { padding: 6px; border-radius: 6px; background: var(--bg2); border: 1px solid var(--bg3); color: var(--t1); }
+    .btn-icon:hover { background: var(--bg3); color: var(--t0); }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+    /* ── Main area ────────────────────────────────────────── */
+    main {
+      grid-area: mn;
+      overflow-y: auto;
+      padding: 18px;
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    main::-webkit-scrollbar { width: 4px; }
+    main::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 2px; }
+
+    /* ── Add card ─────────────────────────────────────────── */
+    .add-card {
+      background: var(--bg1);
+      border: 1px solid var(--bg3);
+      border-radius: var(--rl);
+      padding: 16px;
+    }
+    .add-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--t1); margin-bottom: 12px; }
+
+    .url-row { display: flex; gap: 10px; }
+    .url-row input { flex: 1; font-size: 14px; padding: 9px 12px; }
+    .url-hint { font-size: 11px; color: var(--t2); margin-top: 6px; }
+
+    /* ── Queue ────────────────────────────────────────────── */
+    .q-head { display: flex; align-items: center; gap: 10px; }
+    .q-head h2 { font-size: 15px; font-weight: 600; }
+    .q-count { background: var(--bg3); border-radius: 10px; padding: 1px 8px; font-size: 12px; color: var(--t1); }
+    .q-head .sp { flex: 1; }
+
+    /* ── Job card ─────────────────────────────────────────── */
+    .job-card {
+      background: var(--bg1); border: 1px solid var(--bg3);
+      border-radius: var(--rl); overflow: hidden; transition: border-color .2s;
+    }
+    .job-card.running      { border-color: #1db95440; }
+    .job-card.rate_limited { border-color: #d2992240; }
+    .job-card.failed       { border-color: #f8514940; }
+    .job-card.completed    { border-color: #1db95418; }
+
+    .job-hd {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 13px 14px 9px;
+    }
+    .jdot {
+      width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; margin-top: 4px;
+    }
+    .d-pending      { background: var(--t2); }
+    .d-running      { background: var(--accent); box-shadow: 0 0 6px var(--accent); animation: pulse 1.4s infinite; }
+    .d-rate_limited { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
+    .d-completed    { background: var(--accent); }
+    .d-failed       { background: var(--red); }
+    .d-cancelled    { background: var(--t2); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; } 50% { opacity: .35; }
+    }
+
+    .j-info { flex: 1; min-width: 0; }
+    .j-url  {
+      font-size: 13px; font-weight: 500;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .j-meta { display: flex; gap: 10px; margin-top: 3px; font-size: 11px; color: var(--t1); flex-wrap: wrap; }
+
+    .badge {
+      font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+      text-transform: uppercase; letter-spacing: .5px; white-space: nowrap;
+    }
+    .b-pending      { background: var(--bg3); color: var(--t1); }
+    .b-running      { background: #1db95422; color: var(--accent); }
+    .b-rate_limited { background: #d2992220; color: var(--yellow); }
+    .b-completed    { background: #1db95422; color: var(--accent); }
+    .b-failed       { background: #f8514920; color: var(--red); }
+    .b-cancelled    { background: var(--bg3); color: var(--t1); }
+
+    .job-bd { padding: 0 14px 13px; }
+
+    .prog-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .prog-track {
+      flex: 1; height: 5px; background: var(--bg3); border-radius: 3px; overflow: hidden;
+    }
+    .prog-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width .4s; }
+    .prog-lbl  { font-size: 11px; color: var(--t1); white-space: nowrap; min-width: 48px; text-align: right; }
+
+    .curr-song {
+      font-size: 12px; color: var(--t1); margin-bottom: 8px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .curr-song span { color: var(--t0); }
+
+    .backoff-box {
+      display: flex; align-items: center; gap: 8px;
+      background: #d2992212; border: 1px solid #d2992228;
+      border-radius: 6px; padding: 7px 10px; font-size: 12px;
+      color: var(--yellow); margin-bottom: 8px;
+    }
+
+    .log-toggle {
+      font-size: 11px; color: var(--t1); cursor: pointer;
+      display: flex; align-items: center; gap: 4px;
+      width: fit-content; padding: 2px 0;
+    }
+    .log-toggle:hover { color: var(--t0); }
+    .log-toggle .chv  { transition: transform .2s; }
+    .log-toggle.open  .chv { transform: rotate(180deg); }
+
+    .log-box {
+      display: none; margin-top: 7px; background: var(--bg0);
+      border: 1px solid var(--bg3); border-radius: 6px;
+      padding: 8px 10px; max-height: 200px; overflow-y: auto;
+      font-family: "SF Mono","JetBrains Mono","Fira Code",monospace; font-size: 11px; line-height: 1.7;
+    }
+    .log-box.open { display: block; }
+    .log-box::-webkit-scrollbar { width: 3px; }
+    .log-box::-webkit-scrollbar-thumb { background: var(--bg3); }
+
+    .ll { display: flex; gap: 8px; }
+    .lt { color: var(--t2); flex-shrink: 0; }
+    .lm { word-break: break-all; }
+    .ll.info    .lm { color: var(--t1); }
+    .ll.success .lm { color: var(--accent); }
+    .ll.warn    .lm { color: var(--yellow); }
+    .ll.error   .lm { color: var(--red); }
+
+    .job-acts { display: flex; gap: 6px; margin-top: 10px; align-items: center; }
+    .open-dir  { font-size: 11px; color: var(--t1); cursor: pointer; display: flex; align-items: center; gap: 4px; }
+    .open-dir:hover { color: var(--accent); }
+
+    /* ── Empty state ──────────────────────────────────────── */
+    .empty {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 10px; padding: 64px 20px; color: var(--t2);
+    }
+    .empty svg { opacity: .25; }
+    .empty p { font-size: 14px; }
+
+    /* ── Modal ────────────────────────────────────────────── */
+    .overlay {
+      display: none; position: fixed; inset: 0; background: #000b;
+      z-index: 100; align-items: center; justify-content: center;
+    }
+    .overlay.open { display: flex; }
+
+    .modal {
+      background: var(--bg1); border: 1px solid var(--bg3);
+      border-radius: var(--rl); box-shadow: var(--sh);
+      width: 480px; max-height: 70vh;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .modal-hd {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; border-bottom: 1px solid var(--bg3);
+    }
+    .modal-hd h3 { font-size: 15px; font-weight: 600; }
+    .modal-path {
+      padding: 8px 16px; font-family: monospace; font-size: 12px;
+      color: var(--t1); background: var(--bg0); border-bottom: 1px solid var(--bg3);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .modal-path span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; }
+    .dir-list { flex: 1; overflow-y: auto; padding: 6px; }
+    .dir-list::-webkit-scrollbar { width: 4px; }
+    .dir-list::-webkit-scrollbar-thumb { background: var(--bg3); }
+    .dir-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; border-radius: 6px; cursor: pointer;
+      color: var(--t0); font-size: 13px;
+    }
+    .dir-item:hover { background: var(--bg2); }
+    .dir-item svg { color: var(--blue); flex-shrink: 0; }
+    .dir-item.na { opacity: .4; cursor: default; }
+    .dir-item.na:hover { background: transparent; }
+    .modal-ft {
+      padding: 10px 16px; border-top: 1px solid var(--bg3);
+      display: flex; gap: 8px; justify-content: flex-end;
+    }
+
+    /* ── Toasts ───────────────────────────────────────────── */
+    #toasts {
+      position: fixed; bottom: 18px; right: 18px;
+      display: flex; flex-direction: column; gap: 8px; z-index: 200;
+    }
+    .toast {
+      background: var(--bg2); border: 1px solid var(--bg3);
+      border-radius: var(--r); padding: 9px 14px; font-size: 13px;
+      box-shadow: var(--sh); animation: slideIn .2s ease; max-width: 300px;
+    }
+    .toast.success { border-color: var(--accent); color: var(--accent); }
+    .toast.error   { border-color: var(--red);    color: var(--red); }
+    @keyframes slideIn {
+      from { transform: translateX(16px); opacity: 0; }
+      to   { transform: none; opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <!-- Drop your logo image into assets/ and set the src here -->
+      <img id="logo-img" src="" alt="Blotify" />
+      <div class="logo-icon" id="logo-fallback">♫</div>
+      Blotify
+    </div>
+    <span class="ws-label" id="wsLabel">Connecting…</span>
+    <span class="ws-dot" id="wsDot"></span>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside>
+
+    <!-- Output directory -->
+    <div>
+      <div class="sec-title">Output</div>
+      <div class="field">
+        <label>Directory</label>
+        <div class="row">
+          <input type="text" id="outputDir" placeholder="~/Music/Blotify" />
+          <button class="btn-icon" title="Browse filesystem" onclick="openBrowser()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Folder structure</label>
+        <select id="structure">
+          <option value="organized">Organized — Artist / Album / Song</option>
+          <option value="playlist">Playlist — Playlist Name / Song</option>
+          <option value="flat">Flat — all songs in one folder</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Audio -->
+    <div>
+      <div class="sec-title">Audio</div>
+      <div class="field">
+        <label>Format</label>
+        <select id="format" onchange="onFormatChange()">
+          <option value="mp3">MP3</option>
+          <option value="flac">FLAC (lossless)</option>
+          <option value="m4a">M4A (AAC)</option>
+          <option value="ogg">OGG Vorbis</option>
+          <option value="opus">Opus</option>
+          <option value="wav">WAV (lossless)</option>
+        </select>
+      </div>
+      <div class="field" id="bitrateField">
+        <label>Quality / Bitrate</label>
+        <select id="bitrate">
+          <option value="320k">320 kbps (best)</option>
+          <option value="256k">256 kbps</option>
+          <option value="192k">192 kbps</option>
+          <option value="128k">128 kbps</option>
+          <option value="auto">Auto (source quality)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Metadata -->
+    <div>
+      <div class="sec-title">Metadata tags</div>
+      <div class="cbgrid" id="metaGrid"></div>
+      <p style="font-size:10px;color:var(--t2);margin-top:8px">
+        ● Always embedded by SpotDL &nbsp;◯ Optional
+      </p>
+    </div>
+
+    <!-- Advanced (collapsed by default) -->
+    <div>
+      <div class="coll-hd" id="advHd" onclick="toggleAdv()">
+        <div class="sec-title" style="margin:0">Advanced</div>
+        <svg class="chv" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div class="coll-bd" id="advBd">
+        <div class="field">
+          <label>Threads</label>
+          <input type="number" id="threads" value="4" min="1" max="16" />
+        </div>
+        <div class="field">
+          <label>If file already exists</label>
+          <select id="overwrite">
+            <option value="skip">Skip — keep existing</option>
+            <option value="force">Overwrite always</option>
+            <option value="metadata">Re-embed metadata only</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Max retries on rate-limit</label>
+          <input type="number" id="maxRetries" value="5" min="0" max="20" />
+        </div>
+        <div class="field">
+          <label>Initial backoff (seconds)</label>
+          <input type="number" id="initBackoff" value="30" min="5" max="120" />
+        </div>
+        <div class="field">
+          <label>YouTube cookies file</label>
+          <input type="text" id="cookieFile" placeholder="/path/to/cookies.txt" />
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- MAIN -->
+  <main>
+
+    <div class="add-card">
+      <div class="add-title">Add download</div>
+      <div class="url-row">
+        <input type="text" id="urlInput"
+          placeholder="Paste a Spotify or YouTube playlist, album, artist, or song URL…"
+          onkeydown="if(event.key==='Enter')submitDownload()" />
+        <button class="btn btn-primary" id="dlBtn" onclick="submitDownload()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/>
+            <path d="M20.88 18.09A5 5 0 0018 9h-1.26A8 8 0 103 16.29"/>
+          </svg>
+          Download
+        </button>
+      </div>
+      <p class="url-hint">Spotify playlists, albums, artists, tracks &nbsp;·&nbsp; YouTube playlists &amp; videos</p>
+    </div>
+
+    <div class="q-head">
+      <h2>Queue</h2>
+      <span class="q-count" id="qCount">0</span>
+      <div class="sp"></div>
+      <button class="btn btn-ghost btn-sm" onclick="clearFinished()">Clear finished</button>
+    </div>
+
+    <div id="jobList"></div>
+
+  </main>
+</div>
+
+<!-- Dir browser modal -->
+<div class="overlay" id="browserModal">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3>Choose output directory</h3>
+      <button class="btn-icon" onclick="closeBrowser()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-path">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+      </svg>
+      <span id="modalPath">/</span>
+    </div>
+    <div class="dir-list" id="dirList"></div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost btn-sm" onclick="closeBrowser()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="selectDir()">Use this folder</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+const jobs   = new Map();
+let ws       = null, wsRetries = 0;
+let browseAt = '';
+
+// Detect Electron
+const isElectron = typeof window.blotify !== 'undefined' && window.blotify.isElectron;
+
+// ── Metadata options ───────────────────────────────────────────────────────
+const META = [
+  { id:'title',        label:'Title',       locked:true  },
+  { id:'artist',       label:'Artist',      locked:true  },
+  { id:'album',        label:'Album',       locked:true  },
+  { id:'cover_art',    label:'Cover Art',   locked:true  },
+  { id:'genre',        label:'Genre',       locked:true  },
+  { id:'track_number', label:'Track #',     locked:true  },
+  { id:'release_date', label:'Release Date',locked:true  },
+  { id:'publisher',    label:'Publisher',   locked:true  },
+  { id:'lyrics',       label:'Lyrics (tag)',locked:false, def:false },
+  { id:'generate_lrc', label:'LRC File',    locked:false, def:false },
+];
+const metaState = {};
+
+function buildMeta() {
+  const g = document.getElementById('metaGrid');
+  g.innerHTML = '';
+  for (const m of META) {
+    metaState[m.id] = m.locked ? true : (m.def ?? true);
+    const el = document.createElement('div');
+    el.className = 'cb-item' + (metaState[m.id] ? ' checked':'') + (m.locked ? ' locked':'');
+    el.dataset.id = m.id;
+    const dot = m.locked ? ' <span style="color:var(--t2);font-size:9px">●</span>' : '';
+    el.innerHTML = `
+      <div class="cb-box">
+        <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="#000" stroke-width="2.5">
+          <polyline points="2 6 5 9 10 3"/>
+        </svg>
+      </div>
+      <span class="cb-label">${esc(m.label)}${dot}</span>`;
+    if (!m.locked) el.addEventListener('click', () => {
+      metaState[m.id] = !metaState[m.id];
+      el.classList.toggle('checked', metaState[m.id]);
+    });
+    g.appendChild(el);
+  }
+}
+
+// ── Format → hide bitrate for lossless ────────────────────────────────────
+function onFormatChange() {
+  const lossless = ['flac','wav'].includes(document.getElementById('format').value);
+  const bf = document.getElementById('bitrateField');
+  bf.style.opacity = lossless ? '.4' : '1';
+  document.getElementById('bitrate').disabled = lossless;
+}
+
+// ── WebSocket ──────────────────────────────────────────────────────────────
+function connectWS() {
+  ws = new WebSocket(`ws://${location.host}/ws`);
+  ws.onopen  = () => { wsRetries = 0; setWS(true); };
+  ws.onmessage = e => {
+    const m = JSON.parse(e.data);
+    if (m.type === 'initial') {
+      jobs.clear();
+      m.jobs.forEach(j => jobs.set(j.id, j));
+      renderQueue();
+    } else if (m.type === 'job_update') {
+      jobs.set(m.job.id, m.job);
+      renderJob(m.job.id);
+      updateCount();
+    }
+  };
+  ws.onclose = () => {
+    setWS(false);
+    setTimeout(connectWS, Math.min(1000 * 2 ** wsRetries++, 12000));
+  };
+  ws.onerror = () => ws.close();
+  setInterval(() => ws.readyState === 1 && ws.send('ping'), 20000);
+}
+
+function setWS(ok) {
+  document.getElementById('wsDot').className   = 'ws-dot' + (ok ? ' on':'');
+  document.getElementById('wsLabel').textContent = ok ? 'Connected' : 'Reconnecting…';
+}
+
+// ── Submit ─────────────────────────────────────────────────────────────────
+async function submitDownload() {
+  const url = document.getElementById('urlInput').value.trim();
+  if (!url) { toast('Paste a URL first', 'error'); return; }
+  const btn = document.getElementById('dlBtn');
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/jobs', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        url,
+        output_dir:      document.getElementById('outputDir').value.trim(),
+        format:          document.getElementById('format').value,
+        bitrate:         document.getElementById('bitrate').value,
+        structure:       document.getElementById('structure').value,
+        threads:         +document.getElementById('threads').value || 4,
+        overwrite:       document.getElementById('overwrite').value,
+        generate_lrc:    metaState.generate_lrc ?? false,
+        cookie_file:     document.getElementById('cookieFile').value.trim(),
+        max_retries:     +document.getElementById('maxRetries').value || 5,
+        initial_backoff: +document.getElementById('initBackoff').value || 30,
+      }),
+    });
+    if (!r.ok) throw new Error(await r.text());
+    const j = await r.json();
+    jobs.set(j.id, j);
+    renderQueue();
+    document.getElementById('urlInput').value = '';
+    toast('Download queued!', 'success');
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ── Cancel / clear ─────────────────────────────────────────────────────────
+async function cancelJob(id) {
+  await fetch(`/api/jobs/${id}`, { method:'DELETE' });
+}
+async function clearFinished() {
+  await fetch('/api/jobs', { method:'DELETE' });
+  for (const [id, j] of jobs)
+    if (['completed','failed','cancelled'].includes(j.status)) jobs.delete(id);
+  renderQueue();
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
+function renderQueue() {
+  const list = document.getElementById('jobList');
+  if (!jobs.size) {
+    list.innerHTML = `
+      <div class="empty">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+          <path d="M9 18V5l12-2v13"/>
+          <circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+        </svg>
+        <p>No downloads yet — paste a URL above.</p>
+      </div>`;
+  } else {
+    list.innerHTML = '';
+    for (const id of [...jobs.keys()].reverse()) {
+      const d = document.createElement('div');
+      d.id = `job-${id}`;
+      list.appendChild(d);
+      renderJob(id);
+    }
+  }
+  updateCount();
+}
+
+function renderJob(id) {
+  const j = jobs.get(id);
+  if (!j) return;
+
+  let el = document.getElementById(`job-${id}`);
+  if (!el) {
+    el = document.createElement('div');
+    el.id = `job-${id}`;
+    document.getElementById('jobList').prepend(el);
+  }
+
+  const pct    = j.total > 0 ? Math.round(j.progress / j.total * 100) : 0;
+  const active = ['pending','running','rate_limited'].includes(j.status);
+  const logId  = `log-${id}`;
+  const logOpen = document.getElementById(logId)?.classList.contains('open') ? 'open' : '';
+
+  let backoffHtml = '';
+  if (j.status === 'rate_limited' && j.backoff_until) {
+    const s = Math.max(0, Math.round((new Date(j.backoff_until) - Date.now()) / 1000));
+    backoffHtml = `
+      <div class="backoff-box">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+        Rate limited — retrying in ${s}s (attempt ${j.retry_count})
+      </div>`;
+  }
+
+  const logLines = (j.log||[]).slice(-80).map(e =>
+    `<div class="ll ${esc(e.level)}"><span class="lt">${esc(e.time)}</span><span class="lm">${esc(e.message)}</span></div>`
+  ).join('');
+
+  const structLabel = { organized:'Organized', playlist:'Playlist', flat:'Flat' }[j.structure] ?? j.structure;
+
+  // Open-in-folder button — use Electron IPC if available, else nothing
+  const openDirHtml = isElectron || !j.output_dir ? '' :
+    `<span class="open-dir" onclick="openFolder('${esc(j.output_dir)}')" title="Open downloads folder">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+      </svg> Open folder</span>`;
+
+  el.innerHTML = `
+    <div class="job-card ${j.status}">
+      <div class="job-hd">
+        <div class="jdot d-${j.status}"></div>
+        <div class="j-info">
+          <div class="j-url" title="${esc(j.url)}">${esc(j.url)}</div>
+          <div class="j-meta">
+            <span>${j.format.toUpperCase()}</span>
+            <span>${structLabel}</span>
+            <span title="${esc(j.output_dir)}">${shortPath(j.output_dir)}</span>
+            <span>${timeAgo(j.created_at)}</span>
+          </div>
+        </div>
+        <span class="badge b-${j.status}">${j.status.replace('_',' ')}</span>
+      </div>
+      <div class="job-bd">
+        ${backoffHtml}
+        ${j.total > 0 ? `
+          <div class="prog-row">
+            <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+            <span class="prog-lbl">${j.progress}/${j.total}</span>
+          </div>` : ''}
+        ${j.current_song ? `<div class="curr-song">♪ <span>${esc(j.current_song)}</span></div>` : ''}
+        <div class="log-toggle ${logOpen}" onclick="toggleLog('${id}')">
+          <svg class="chv" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+          Log (${j.log.length})
+        </div>
+        <div class="log-box ${logOpen}" id="${logId}">${logLines}</div>
+        <div class="job-acts">
+          ${active ? `<button class="btn btn-danger btn-sm" onclick="cancelJob('${id}')">Cancel</button>` : ''}
+          ${openDirHtml}
+        </div>
+      </div>
+    </div>`;
+
+  const lb = document.getElementById(logId);
+  if (lb?.classList.contains('open')) lb.scrollTop = lb.scrollHeight;
+}
+
+function toggleLog(id) {
+  const lb = document.getElementById(`log-${id}`);
+  const tg = lb?.previousElementSibling;
+  if (!lb) return;
+  const open = !lb.classList.contains('open');
+  lb.classList.toggle('open', open);
+  tg?.classList.toggle('open', open);
+  if (open) lb.scrollTop = lb.scrollHeight;
+}
+
+function updateCount() {
+  document.getElementById('qCount').textContent = jobs.size;
+}
+
+function openFolder(path) {
+  if (window.blotify?.openFolder) {
+    window.blotify.openFolder(path);
+  }
+}
+
+// ── Dir browser ────────────────────────────────────────────────────────────
+async function openBrowser() {
+  const cur = document.getElementById('outputDir').value.trim();
+  await navTo(cur || '');
+  document.getElementById('browserModal').classList.add('open');
+}
+function closeBrowser() {
+  document.getElementById('browserModal').classList.remove('open');
+}
+function selectDir() {
+  document.getElementById('outputDir').value = browseAt;
+  closeBrowser();
+}
+async function navTo(path) {
+  const r = await fetch('/api/browse?path=' + encodeURIComponent(path));
+  const d = await r.json();
+  browseAt = d.current;
+  document.getElementById('modalPath').textContent = d.current;
+  const list = document.getElementById('dirList');
+  list.innerHTML = '';
+  if (d.parent) {
+    const up = make('div','dir-item',`
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg> ..`);
+    up.onclick = () => navTo(d.parent);
+    list.appendChild(up);
+  }
+  for (const e of d.entries) {
+    const el = make('div','dir-item'+(e.accessible?'':' na'),`
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+      </svg> ${esc(e.name)}`);
+    if (e.accessible) el.onclick = () => navTo(e.path);
+    list.appendChild(el);
+  }
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function make(tag, cls, html) {
+  const el = document.createElement(tag);
+  el.className = cls;
+  el.innerHTML = html;
+  return el;
+}
+function esc(s) {
+  return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function shortPath(p) {
+  const home = navigator.platform.startsWith('Win') ? '' : '/home';
+  return p ? p.replace(home, '~').slice(-32) : '';
+}
+function timeAgo(iso) {
+  const d = Math.round((Date.now() - new Date(iso)) / 1000);
+  if (d < 60)   return `${d}s ago`;
+  if (d < 3600) return `${Math.round(d/60)}m ago`;
+  return `${Math.round(d/3600)}h ago`;
+}
+function toast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+function toggleAdv() {
+  document.getElementById('advHd').classList.toggle('open');
+  document.getElementById('advBd').classList.toggle('open');
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  buildMeta();
+  connectWS();
+
+  // Show/hide logo image vs fallback icon
+  const img = document.getElementById('logo-img');
+  img.onload = () => {
+    img.style.display = 'block';
+    document.getElementById('logo-fallback').style.display = 'none';
+  };
+});
+
+// Rate-limited countdown tick
+setInterval(() => {
+  for (const [id, j] of jobs)
+    if (j.status === 'rate_limited') renderJob(id);
+}, 1000);
+</script>
+</body>
+</html>

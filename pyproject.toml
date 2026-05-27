@@ -1,0 +1,20 @@
+[project]
+name = "spotdlweb"
+version = "0.1.0"
+description = "Web interface for SpotDL"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.20.0",
+    "spotdl>=4.2.0",
+    "aiofiles>=22.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.0",
+]
+
+[tool.uv]
+# Let spotdl's uvicorn constraint resolve; we only need uvicorn to be present.
+constraint-dependencies = []

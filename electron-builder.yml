@@ -1,0 +1,61 @@
+appId: com.blotify.app
+productName: Blotify
+
+# Icon — drop your files into assets/ and uncomment:
+# icon: assets/icon.png          # 512×512 PNG (Linux/Windows)
+# mac.icon: assets/icon.icns     # macOS ICNS
+
+directories:
+  buildResources: assets
+  output: dist
+
+# Which files to include in the app package
+files:
+  - electron/**
+  - static/**
+  - "!**/.venv/**"
+  - "!**/resources/**"
+  - "!**/dist/**"
+  - "!**/build/**"
+  - "!**/scripts/**"
+  - "!**/__pycache__/**"
+  - "!*.py"
+  - "!*.spec"
+  - "!pyproject.toml"
+  - "!uv.lock"
+  - "!README.md"
+
+# ffmpeg-static binary must be outside asar so the OS can execute it
+asarUnpack:
+  - "node_modules/ffmpeg-static/**"
+
+# Bundled spotdl + PyInstaller server binary
+extraResources:
+  - from: resources/bin
+    to: bin
+
+linux:
+  target:
+    - AppImage
+    - deb
+  category: AudioVideo
+  synopsis: Download Spotify & YouTube music locally.
+
+mac:
+  target:
+    - dmg
+  category: public.app-category.music
+  minimumSystemVersion: "12.0"
+  hardenedRuntime: true
+  entitlements: assets/entitlements.mac.plist
+  entitlementsInherit: assets/entitlements.mac.plist
+
+win:
+  target:
+    - nsis
+  publisherName: Blotify
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true

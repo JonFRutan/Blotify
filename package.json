@@ -1,0 +1,28 @@
+{
+  "name": "blotify",
+  "version": "1.0.0",
+  "description": "Download Spotify & YouTube music locally.",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "download-bins": "node scripts/download-bins.js",
+    "build-server": "python scripts/build-server.py",
+    "build-server:win": "python scripts\\build-server.py",
+    "predist": "npm run download-bins && npm run build-server",
+    "dist": "electron-builder",
+    "dist:linux": "electron-builder --linux",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win"
+  },
+  "keywords": ["spotify", "youtube", "downloader", "music"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "ffmpeg-static": "^5.2.0"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  }
+}
