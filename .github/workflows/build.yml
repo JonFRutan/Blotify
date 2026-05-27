@@ -18,9 +18,7 @@ jobs:
           - os: ubuntu-latest
             platform: linux
             electron_flag: --linux
-            artifact_glob: |
-              dist/*.AppImage
-              dist/*.deb
+            artifact_glob: dist/*.AppImage
 
           - os: macos-latest
             platform: darwin

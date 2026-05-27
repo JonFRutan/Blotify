@@ -95,8 +95,8 @@ def main():
                 candidate.rename(exe_src)
                 break
 
-    print(f'\n✓ Server binary at: {dst / f"server{EXT}"}')
-    print(f'  Now run:  npm run dist:{PLAT.replace("darwin","mac")}')
+    print(f'\n[OK] Server binary at: {dst / f"server{EXT}"}')
+    print(f'     Now run:  npm run dist:{PLAT.replace("darwin","mac")}')
 
 
 if __name__ == '__main__':

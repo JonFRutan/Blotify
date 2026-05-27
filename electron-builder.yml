@@ -37,7 +37,6 @@ extraResources:
 linux:
   target:
     - AppImage
-    - deb
   category: AudioVideo
   synopsis: Download Spotify & YouTube music locally.
 
