@@ -55,7 +55,9 @@ function binDir() {
 }
 
 function serverBin() {
-  return path.join(binDir(), IS_WIN ? 'server.exe' : 'server');
+  // PyInstaller --onedir produces a server/ subdirectory containing the exe.
+  // Structure: bin/{platform}/server/server[.exe]
+  return path.join(binDir(), 'server', IS_WIN ? 'server.exe' : 'server');
 }
 
 function spotdlBin() {
