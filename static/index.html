@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Blotify</title>
   <style>
-    /* ── Reset & tokens ───────────────────────────────────── */
+    /* ── Reset & tokens ───────────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
@@ -39,7 +39,7 @@
     button { cursor: pointer; font: inherit; }
     input, select { font: inherit; }
 
-    /* ── Layout ───────────────────────────────────────────── */
+    /* ── Layout ───────────────────────────────────────────────────────────── */
     .layout {
       display: grid;
       grid-template-rows: 52px 1fr;
@@ -48,56 +48,62 @@
       height: 100vh;
     }
 
-    /* ── Header ───────────────────────────────────────────── */
+    /* ── Header ───────────────────────────────────────────────────────────── */
     header {
       grid-area: hd;
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 0 18px;
+      padding: 0 14px 0 18px;
       background: var(--bg1);
       border-bottom: 1px solid var(--bg3);
-      -webkit-app-region: drag; /* drag window on macOS */
+      -webkit-app-region: drag;
       user-select: none;
     }
 
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    .app-name {
       font-size: 17px;
       font-weight: 700;
       letter-spacing: -.3px;
       -webkit-app-region: no-drag;
     }
 
-    /* Logo placeholder — replace #logo-img src with your image */
-    #logo-img {
-      width: 28px; height: 28px;
-      border-radius: 6px;
-      object-fit: contain;
-      display: none; /* shown once src is set */
-    }
-    .logo-icon {
-      width: 28px; height: 28px;
-      background: var(--accent);
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 15px;
-    }
+    .header-spacer { flex: 1; }
 
     .ws-dot {
       width: 8px; height: 8px;
       border-radius: 50%;
       background: var(--t2);
-      margin-left: auto;
       transition: background .3s;
       -webkit-app-region: no-drag;
     }
     .ws-dot.on { background: var(--accent); box-shadow: 0 0 5px var(--accent); }
     .ws-label { font-size: 12px; color: var(--t1); -webkit-app-region: no-drag; }
 
-    /* ── Sidebar ──────────────────────────────────────────── */
+    @keyframes logo-shake {
+      0%, 100% { transform: rotate(0deg) scale(1); }
+      15%  { transform: rotate(-14deg) scale(1.08); }
+      30%  { transform: rotate(11deg)  scale(1.05); }
+      45%  { transform: rotate(-9deg)  scale(1.03); }
+      60%  { transform: rotate(7deg)   scale(1.02); }
+      75%  { transform: rotate(-4deg)  scale(1.01); }
+      90%  { transform: rotate(2deg)   scale(1); }
+    }
+
+    .logo-left {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      object-fit: contain;
+      flex-shrink: 0;
+      -webkit-app-region: no-drag;
+      cursor: pointer;
+      transition: filter .15s;
+    }
+    .logo-left:hover { filter: brightness(1.15); }
+    .logo-left.shaking { animation: logo-shake .55s ease; }
+
+    /* ── Sidebar ──────────────────────────────────────────────────────────── */
     aside {
       grid-area: sb;
       background: var(--bg1);
@@ -120,7 +126,7 @@
       margin-bottom: 10px;
     }
 
-    /* ── Form controls ────────────────────────────────────── */
+    /* ── Form controls ────────────────────────────────────────────────────── */
     .field { display: flex; flex-direction: column; gap: 5px; }
     .field + .field { margin-top: 8px; }
     .field label { font-size: 12px; color: var(--t1); font-weight: 500; }
@@ -149,7 +155,7 @@
       padding-right: 28px;
     }
 
-    /* ── Checkbox grid ────────────────────────────────────── */
+    /* ── Checkbox grid ────────────────────────────────────────────────────── */
     .cbgrid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -179,7 +185,7 @@
     .cb-item.checked .cb-box svg { display: block; }
     .cb-label { font-size: 12px; line-height: 1.2; }
 
-    /* ── Collapse ─────────────────────────────────────────── */
+    /* ── Collapse ─────────────────────────────────────────────────────────── */
     .coll-hd {
       display: flex; align-items: center; justify-content: space-between;
       cursor: pointer; padding: 2px 0;
@@ -189,7 +195,7 @@
     .coll-bd { display: none; padding-top: 10px; flex-direction: column; gap: 10px; }
     .coll-bd.open { display: flex; }
 
-    /* ── Buttons ──────────────────────────────────────────── */
+    /* ── Buttons ──────────────────────────────────────────────────────────── */
     .btn {
       display: inline-flex; align-items: center; gap: 6px;
       padding: 7px 14px; border-radius: var(--r); border: none;
@@ -207,7 +213,7 @@
     .btn-icon:hover { background: var(--bg3); color: var(--t0); }
     .btn-sm { padding: 4px 10px; font-size: 12px; }
 
-    /* ── Main area ────────────────────────────────────────── */
+    /* ── Main area ────────────────────────────────────────────────────────── */
     main {
       grid-area: mn;
       overflow-y: auto;
@@ -217,7 +223,7 @@
     main::-webkit-scrollbar { width: 4px; }
     main::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 2px; }
 
-    /* ── Add card ─────────────────────────────────────────── */
+    /* ── Add card ─────────────────────────────────────────────────────────── */
     .add-card {
       background: var(--bg1);
       border: 1px solid var(--bg3);
@@ -230,13 +236,13 @@
     .url-row input { flex: 1; font-size: 14px; padding: 9px 12px; }
     .url-hint { font-size: 11px; color: var(--t2); margin-top: 6px; }
 
-    /* ── Queue ────────────────────────────────────────────── */
+    /* ── Queue ────────────────────────────────────────────────────────────── */
     .q-head { display: flex; align-items: center; gap: 10px; }
     .q-head h2 { font-size: 15px; font-weight: 600; }
     .q-count { background: var(--bg3); border-radius: 10px; padding: 1px 8px; font-size: 12px; color: var(--t1); }
     .q-head .sp { flex: 1; }
 
-    /* ── Job card ─────────────────────────────────────────── */
+    /* ── Job card ─────────────────────────────────────────────────────────── */
     .job-card {
       background: var(--bg1); border: 1px solid var(--bg3);
       border-radius: var(--rl); overflow: hidden; transition: border-color .2s;
@@ -284,12 +290,52 @@
 
     .job-bd { padding: 0 14px 13px; }
 
-    .prog-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-    .prog-track {
-      flex: 1; height: 5px; background: var(--bg3); border-radius: 3px; overflow: hidden;
+    /* ── Progress bar with flying logo (top of each job card) ───────────── */
+    .card-prog-area {
+      height: 36px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding: 0 40px 0 16px; /* right pad leaves room for the label */
+      background: var(--bg2);
+      border-bottom: 1px solid var(--bg3);
     }
-    .prog-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width .4s; }
-    .prog-lbl  { font-size: 11px; color: var(--t1); white-space: nowrap; min-width: 48px; text-align: right; }
+    .card-prog-track {
+      flex: 1;
+      height: 4px;
+      background: var(--bg3);
+      border-radius: 2px;
+      overflow: hidden;
+      position: relative;
+    }
+    .card-prog-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width .4s;
+    }
+    /* Logo rides the track; left uses a CSS custom property --prog (0–1) */
+    .card-prog-logo {
+      position: absolute;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      transition: left .4s;
+      object-fit: contain;
+      filter: drop-shadow(0 1px 6px #000a);
+      /* track occupies from left:16px to right:40px of the area */
+      left: calc(16px + (100% - 56px) * var(--prog, 0));
+    }
+    .card-prog-lbl {
+      position: absolute;
+      right: 10px;
+      font-size: 10px;
+      color: var(--t1);
+      white-space: nowrap;
+    }
 
     .curr-song {
       font-size: 12px; color: var(--t1); margin-bottom: 8px;
@@ -335,7 +381,7 @@
     .open-dir  { font-size: 11px; color: var(--t1); cursor: pointer; display: flex; align-items: center; gap: 4px; }
     .open-dir:hover { color: var(--accent); }
 
-    /* ── Empty state ──────────────────────────────────────── */
+    /* ── Empty state ──────────────────────────────────────────────────────── */
     .empty {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: 10px; padding: 64px 20px; color: var(--t2);
@@ -343,7 +389,7 @@
     .empty svg { opacity: .25; }
     .empty p { font-size: 14px; }
 
-    /* ── Modal ────────────────────────────────────────────── */
+    /* ── Modal ────────────────────────────────────────────────────────────── */
     .overlay {
       display: none; position: fixed; inset: 0; background: #000b;
       z-index: 100; align-items: center; justify-content: center;
@@ -384,7 +430,35 @@
       display: flex; gap: 8px; justify-content: flex-end;
     }
 
-    /* ── Toasts ───────────────────────────────────────────── */
+    /* ── File tree ────────────────────────────────────────────────────────── */
+    .file-tree {
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      background: var(--bg0);
+      border: 1px solid var(--bg3);
+      border-radius: var(--r);
+      padding: 5px;
+    }
+    .file-tree::-webkit-scrollbar { width: 3px; }
+    .file-tree::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 2px; }
+
+    .tree-item { display: flex; flex-direction: column; }
+    .tree-row {
+      display: flex; align-items: center; gap: 5px;
+      padding: 3px 4px; border-radius: 4px;
+      color: var(--t1); user-select: none;
+      white-space: nowrap; overflow: hidden;
+    }
+    .tree-row.dir { color: var(--blue); cursor: pointer; }
+    .tree-row.dir:hover { background: var(--bg2); color: var(--t0); }
+    .tree-row.file { cursor: default; }
+    .tree-icon { flex-shrink: 0; color: inherit; }
+    .tree-name { overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+    .tree-children { padding-left: 14px; }
+    .tree-empty { color: var(--t2); font-size: 11px; padding: 4px; display: block; }
+
+    /* ── Toasts ───────────────────────────────────────────────────────────── */
     #toasts {
       position: fixed; bottom: 18px; right: 18px;
       display: flex; flex-direction: column; gap: 8px; z-index: 200;
@@ -407,12 +481,9 @@
 
   <!-- HEADER -->
   <header>
-    <div class="logo">
-      <!-- Drop your logo image into assets/ and set the src here -->
-      <img id="logo-img" src="" alt="Blotify" />
-      <div class="logo-icon" id="logo-fallback">♫</div>
-      Blotify
-    </div>
+    <img id="logo-img" src="/static/botifly.png" alt="Blotify" class="logo-left" onclick="shakeLogo()" />
+    <div class="app-name">Blotify</div>
+    <div class="header-spacer"></div>
     <span class="ws-label" id="wsLabel">Connecting…</span>
     <span class="ws-dot" id="wsDot"></span>
   </header>
@@ -448,8 +519,18 @@
     <div>
       <div class="sec-title">Audio</div>
       <div class="field">
+        <label>Source</label>
+        <select id="audioProvider">
+          <option value="youtube-music">YouTube Music (default)</option>
+          <option value="youtube">YouTube</option>
+          <option value="soundcloud">SoundCloud</option>
+          <option value="slider-kz">slider.kz</option>
+          <option value="bandcamp">Bandcamp</option>
+        </select>
+      </div>
+      <div class="field">
         <label>Format</label>
-        <select id="format" onchange="onFormatChange()">
+        <select id="format" onchange="onFormatChange(); saveSettings();">
           <option value="mp3">MP3</option>
           <option value="flac">FLAC (lossless)</option>
           <option value="m4a">M4A (AAC)</option>
@@ -509,9 +590,41 @@
           <input type="number" id="initBackoff" value="30" min="5" max="120" />
         </div>
         <div class="field">
+          <label title="How many audio errors in a row before pausing. Lower = more sensitive.">Consecutive errors before backoff</label>
+          <input type="number" id="errorThreshold" value="5" min="1" max="20" />
+        </div>
+        <div class="field">
+          <label title="Errors must all happen within this window to count as rate-limiting. Unavailable songs fail slowly; rate-limits fail fast.">Error burst window (seconds)</label>
+          <input type="number" id="errorWindow" value="90" min="10" max="300" />
+        </div>
+        <div class="cb-item checked" id="reverseRetryItem" onclick="toggleReverseRetry()" style="margin-top:4px">
+          <div class="cb-box">
+            <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="#000" stroke-width="2.5">
+              <polyline points="2 6 5 9 10 3"/>
+            </svg>
+          </div>
+          <span class="cb-label">Reverse playlist on retry<br><span style="color:var(--t2);font-size:10px">Starts from end so new songs are reached first</span></span>
+        </div>
+        <div class="field">
           <label>YouTube cookies file</label>
           <input type="text" id="cookieFile" placeholder="/path/to/cookies.txt" />
         </div>
+      </div>
+    </div>
+
+    <!-- File Tree -->
+    <div>
+      <div class="coll-hd open" id="treeHd" onclick="toggleTree()">
+        <div class="sec-title" style="margin:0">Files</div>
+        <svg class="chv" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div class="coll-bd open" id="treeBd">
+        <div class="file-tree" id="fileTree">
+          <span class="tree-empty">Set an output directory above to preview files</span>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center" onclick="refreshTree()">↻ Refresh</button>
       </div>
     </div>
 
@@ -582,8 +695,66 @@ const jobs   = new Map();
 let ws       = null, wsRetries = 0;
 let browseAt = '';
 
-// Detect Electron
 const isElectron = typeof window.blotify !== 'undefined' && window.blotify.isElectron;
+
+// ── Settings persistence ───────────────────────────────────────────────────
+const SETTINGS_KEY = 'blotify_settings';
+
+function saveSettings() {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+      outputDir:      document.getElementById('outputDir').value,
+      structure:      document.getElementById('structure').value,
+      audioProvider:  document.getElementById('audioProvider').value,
+      format:         document.getElementById('format').value,
+      bitrate:        document.getElementById('bitrate').value,
+      threads:        document.getElementById('threads').value,
+      overwrite:      document.getElementById('overwrite').value,
+      maxRetries:     document.getElementById('maxRetries').value,
+      initBackoff:    document.getElementById('initBackoff').value,
+      errorThreshold: document.getElementById('errorThreshold').value,
+      errorWindow:    document.getElementById('errorWindow').value,
+      cookieFile:     document.getElementById('cookieFile').value,
+      reverseOnRetry: document.getElementById('reverseRetryItem').classList.contains('checked'),
+      metaLyrics:     metaState.lyrics ?? false,
+      metaLrc:        metaState.generate_lrc ?? false,
+      advOpen:        document.getElementById('advBd').classList.contains('open'),
+      treeOpen:       document.getElementById('treeBd').classList.contains('open'),
+    }));
+  } catch(e) {}
+}
+
+function loadSettings() {
+  try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'); }
+  catch(e) { return {}; }
+}
+
+function applySettings(s) {
+  const set = (id, val) => {
+    if (val !== undefined && val !== null && val !== '') document.getElementById(id).value = val;
+  };
+  set('outputDir',      s.outputDir);
+  set('structure',      s.structure);
+  set('audioProvider',  s.audioProvider);
+  set('bitrate',        s.bitrate);
+  set('threads',        s.threads);
+  set('overwrite',      s.overwrite);
+  set('maxRetries',     s.maxRetries);
+  set('initBackoff',    s.initBackoff);
+  set('errorThreshold', s.errorThreshold);
+  set('errorWindow',    s.errorWindow);
+  set('cookieFile',     s.cookieFile);
+  if (s.format) { document.getElementById('format').value = s.format; onFormatChange(); }
+  if (s.reverseOnRetry === false) document.getElementById('reverseRetryItem').classList.remove('checked');
+  if (s.advOpen) {
+    document.getElementById('advHd').classList.add('open');
+    document.getElementById('advBd').classList.add('open');
+  }
+  if (s.treeOpen === false) {
+    document.getElementById('treeHd').classList.remove('open');
+    document.getElementById('treeBd').classList.remove('open');
+  }
+}
 
 // ── Metadata options ───────────────────────────────────────────────────────
 const META = [
@@ -600,11 +771,16 @@ const META = [
 ];
 const metaState = {};
 
-function buildMeta() {
+function buildMeta(saved = {}) {
   const g = document.getElementById('metaGrid');
   g.innerHTML = '';
   for (const m of META) {
-    metaState[m.id] = m.locked ? true : (m.def ?? true);
+    let initVal = m.locked ? true : (m.def ?? true);
+    if (!m.locked) {
+      if (m.id === 'lyrics'       && saved.metaLyrics !== undefined) initVal = saved.metaLyrics;
+      if (m.id === 'generate_lrc' && saved.metaLrc    !== undefined) initVal = saved.metaLrc;
+    }
+    metaState[m.id] = initVal;
     const el = document.createElement('div');
     el.className = 'cb-item' + (metaState[m.id] ? ' checked':'') + (m.locked ? ' locked':'');
     el.dataset.id = m.id;
@@ -619,6 +795,7 @@ function buildMeta() {
     if (!m.locked) el.addEventListener('click', () => {
       metaState[m.id] = !metaState[m.id];
       el.classList.toggle('checked', metaState[m.id]);
+      saveSettings();
     });
     g.appendChild(el);
   }
@@ -657,7 +834,7 @@ function connectWS() {
 }
 
 function setWS(ok) {
-  document.getElementById('wsDot').className   = 'ws-dot' + (ok ? ' on':'');
+  document.getElementById('wsDot').className    = 'ws-dot' + (ok ? ' on':'');
   document.getElementById('wsLabel').textContent = ok ? 'Connected' : 'Reconnecting…';
 }
 
@@ -673,16 +850,20 @@ async function submitDownload() {
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         url,
-        output_dir:      document.getElementById('outputDir').value.trim(),
-        format:          document.getElementById('format').value,
-        bitrate:         document.getElementById('bitrate').value,
-        structure:       document.getElementById('structure').value,
-        threads:         +document.getElementById('threads').value || 4,
-        overwrite:       document.getElementById('overwrite').value,
-        generate_lrc:    metaState.generate_lrc ?? false,
-        cookie_file:     document.getElementById('cookieFile').value.trim(),
-        max_retries:     +document.getElementById('maxRetries').value || 5,
-        initial_backoff: +document.getElementById('initBackoff').value || 30,
+        output_dir:       document.getElementById('outputDir').value.trim(),
+        format:           document.getElementById('format').value,
+        bitrate:          document.getElementById('bitrate').value,
+        structure:        document.getElementById('structure').value,
+        audio_provider:   document.getElementById('audioProvider').value,
+        threads:          +document.getElementById('threads').value || 4,
+        overwrite:        document.getElementById('overwrite').value,
+        generate_lrc:     metaState.generate_lrc ?? false,
+        cookie_file:      document.getElementById('cookieFile').value.trim(),
+        max_retries:      +document.getElementById('maxRetries').value || 5,
+        initial_backoff:  +document.getElementById('initBackoff').value || 30,
+        error_threshold:  +document.getElementById('errorThreshold').value || 5,
+        error_window:     +document.getElementById('errorWindow').value || 90,
+        reverse_on_retry: document.getElementById('reverseRetryItem').classList.contains('checked'),
       }),
     });
     if (!r.ok) throw new Error(await r.text());
@@ -767,7 +948,6 @@ function renderJob(id) {
 
   const structLabel = { organized:'Organized', playlist:'Playlist', flat:'Flat' }[j.structure] ?? j.structure;
 
-  // Open-in-folder button — use Electron IPC if available, else nothing
   const openDirHtml = isElectron || !j.output_dir ? '' :
     `<span class="open-dir" onclick="openFolder('${esc(j.output_dir)}')" title="Open downloads folder">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -776,6 +956,12 @@ function renderJob(id) {
 
   el.innerHTML = `
     <div class="job-card ${j.status}">
+      ${j.total > 0 ? `
+      <div class="card-prog-area" style="--prog:${pct / 100}">
+        <div class="card-prog-track"><div class="card-prog-fill" style="width:${pct}%"></div></div>
+        <img class="card-prog-logo" src="/static/botifly.png" alt="" />
+        <span class="card-prog-lbl">${j.progress}/${j.total}</span>
+      </div>` : ''}
       <div class="job-hd">
         <div class="jdot d-${j.status}"></div>
         <div class="j-info">
@@ -791,11 +977,6 @@ function renderJob(id) {
       </div>
       <div class="job-bd">
         ${backoffHtml}
-        ${j.total > 0 ? `
-          <div class="prog-row">
-            <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
-            <span class="prog-lbl">${j.progress}/${j.total}</span>
-          </div>` : ''}
         ${j.current_song ? `<div class="curr-song">♪ <span>${esc(j.current_song)}</span></div>` : ''}
         <div class="log-toggle ${logOpen}" onclick="toggleLog('${id}')">
           <svg class="chv" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -830,9 +1011,15 @@ function updateCount() {
 }
 
 function openFolder(path) {
-  if (window.blotify?.openFolder) {
-    window.blotify.openFolder(path);
-  }
+  if (window.blotify?.openFolder) window.blotify.openFolder(path);
+}
+
+function shakeLogo() {
+  const img = document.getElementById('logo-img');
+  img.classList.remove('shaking');
+  void img.offsetWidth; // force reflow so animation restarts if clicked rapidly
+  img.classList.add('shaking');
+  img.addEventListener('animationend', () => img.classList.remove('shaking'), { once: true });
 }
 
 // ── Dir browser ────────────────────────────────────────────────────────────
@@ -847,6 +1034,8 @@ function closeBrowser() {
 function selectDir() {
   document.getElementById('outputDir').value = browseAt;
   closeBrowser();
+  saveSettings();
+  refreshTree();
 }
 async function navTo(path) {
   const r = await fetch('/api/browse?path=' + encodeURIComponent(path));
@@ -871,6 +1060,82 @@ async function navTo(path) {
     if (e.accessible) el.onclick = () => navTo(e.path);
     list.appendChild(el);
   }
+}
+
+// ── File tree ──────────────────────────────────────────────────────────────
+let treeTimer = null;
+
+function toggleTree() {
+  document.getElementById('treeHd').classList.toggle('open');
+  document.getElementById('treeBd').classList.toggle('open');
+  saveSettings();
+}
+
+async function refreshTree() {
+  const dir = document.getElementById('outputDir').value.trim();
+  const container = document.getElementById('fileTree');
+  if (!dir) {
+    container.innerHTML = '<span class="tree-empty">Set an output directory above to preview files</span>';
+    return;
+  }
+  container.innerHTML = '<span class="tree-empty">Loading…</span>';
+  try {
+    const r = await fetch('/api/filetree?path=' + encodeURIComponent(dir));
+    const d = await r.json();
+    if (d.error) {
+      container.innerHTML = `<span class="tree-empty" style="color:var(--red)">${esc(d.error)}</span>`;
+      return;
+    }
+    container.innerHTML = '';
+    const nodes = (d.children || []).map(makeTreeNode).filter(Boolean);
+    if (!nodes.length) {
+      container.innerHTML = '<span class="tree-empty">Empty directory</span>';
+      return;
+    }
+    for (const n of nodes) container.appendChild(n);
+  } catch(e) {
+    container.innerHTML = '<span class="tree-empty" style="color:var(--red)">Could not read directory</span>';
+  }
+}
+
+const AUDIO_EXTS = new Set(['.mp3','.flac','.m4a','.ogg','.opus','.wav','.lrc']);
+
+function makeTreeNode(node) {
+  const ext = node.name.includes('.') ? node.name.slice(node.name.lastIndexOf('.')).toLowerCase() : '';
+  if (!node.is_dir && !AUDIO_EXTS.has(ext)) return null;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'tree-item';
+  const row = document.createElement('div');
+
+  if (node.is_dir) {
+    row.className = 'tree-row dir';
+    row.innerHTML = `
+      <svg class="tree-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+      </svg>
+      <span class="tree-name">${esc(node.name)}</span>`;
+
+    const childWrap = document.createElement('div');
+    childWrap.className = 'tree-children';
+    const childEls = (node.children || []).map(makeTreeNode).filter(Boolean);
+    for (const c of childEls) childWrap.appendChild(c);
+
+    let expanded = childEls.length > 0;
+    childWrap.style.display = expanded ? '' : 'none';
+    row.onclick = () => { expanded = !expanded; childWrap.style.display = expanded ? '' : 'none'; };
+    wrap.appendChild(row);
+    wrap.appendChild(childWrap);
+  } else {
+    row.className = 'tree-row file';
+    row.innerHTML = `
+      <svg class="tree-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+      </svg>
+      <span class="tree-name">${esc(node.name)}</span>`;
+    wrap.appendChild(row);
+  }
+  return wrap;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -903,19 +1168,36 @@ function toast(msg, type='info') {
 function toggleAdv() {
   document.getElementById('advHd').classList.toggle('open');
   document.getElementById('advBd').classList.toggle('open');
+  saveSettings();
+}
+function toggleReverseRetry() {
+  document.getElementById('reverseRetryItem').classList.toggle('checked');
+  saveSettings();
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  buildMeta();
+  const saved = loadSettings();
+  buildMeta(saved);
+  applySettings(saved);
   connectWS();
 
-  // Show/hide logo image vs fallback icon
-  const img = document.getElementById('logo-img');
-  img.onload = () => {
-    img.style.display = 'block';
-    document.getElementById('logo-fallback').style.display = 'none';
-  };
+  // Auto-save on all settings inputs
+  const watchIds = ['outputDir','structure','audioProvider','bitrate',
+    'threads','overwrite','maxRetries','initBackoff','errorThreshold','errorWindow','cookieFile'];
+  for (const id of watchIds) {
+    const el = document.getElementById(id);
+    if (el) { el.addEventListener('change', saveSettings); el.addEventListener('input', saveSettings); }
+  }
+
+  // Debounced tree refresh when output dir is typed
+  document.getElementById('outputDir').addEventListener('input', () => {
+    clearTimeout(treeTimer);
+    treeTimer = setTimeout(refreshTree, 700);
+  });
+
+  // Initial tree load
+  if (saved.outputDir) refreshTree();
 });
 
 // Rate-limited countdown tick

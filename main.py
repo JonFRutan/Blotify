@@ -92,12 +92,16 @@ async def create_job(body: dict):
         format=body.get('format', 'mp3'),
         bitrate=body.get('bitrate', '320k'),
         structure=body.get('structure', 'organized'),
+        audio_provider=body.get('audio_provider', 'youtube-music'),
         threads=int(body.get('threads', 4)),
         overwrite=body.get('overwrite', 'skip'),
         generate_lrc=bool(body.get('generate_lrc', False)),
         cookie_file=body.get('cookie_file', ''),
         max_retries=int(body.get('max_retries', 5)),
         initial_backoff=int(body.get('initial_backoff', 30)),
+        error_threshold=int(body.get('error_threshold', 5)),
+        error_window=float(body.get('error_window', 90.0)),
+        reverse_on_retry=bool(body.get('reverse_on_retry', True)),
     )
 
     job_manager.add_job(job)
@@ -122,6 +126,29 @@ async def clear_finished():
     for jid in done:
         del job_manager.jobs[jid]
     return {'cleared': len(done)}
+
+
+@app.get('/api/filetree')
+async def filetree(path: str = '', depth: int = 2):
+    root = Path(path).resolve() if path else Path.home()
+    if not root.is_dir():
+        return {'error': 'not a directory', 'path': str(root)}
+
+    def scan(directory: Path, remaining: int) -> list:
+        items = []
+        try:
+            for entry in sorted(directory.iterdir()):
+                if entry.name.startswith('.'):
+                    continue
+                item = {'name': entry.name, 'path': str(entry), 'is_dir': entry.is_dir()}
+                if entry.is_dir() and remaining > 1:
+                    item['children'] = scan(entry, remaining - 1)
+                items.append(item)
+        except PermissionError:
+            pass
+        return items
+
+    return {'path': str(root), 'children': scan(root, depth)}
 
 
 @app.get('/api/output-dir')
