@@ -133,6 +133,8 @@ class JobManager:
     def __init__(self):
         self.jobs: Dict[str, DownloadJob] = {}
         self._ws: Set[WebSocket] = set()
+        self._queue: Optional[asyncio.Queue] = None
+        self._worker_task: Optional[asyncio.Task] = None
 
     # ── WebSocket ──────────────────────────────────────────────────────────
 
@@ -154,8 +156,32 @@ class JobManager:
 
     # ── Job management ─────────────────────────────────────────────────────
 
-    def add_job(self, job: DownloadJob):
+    async def enqueue_job(self, job: DownloadJob):
+        """Register a job and add it to the sequential work queue."""
         self.jobs[job.id] = job
+        if self._queue is None:
+            self._queue = asyncio.Queue()
+        await self._queue.put(job.id)
+        if self._worker_task is None or self._worker_task.done():
+            self._worker_task = asyncio.create_task(self._worker())
+
+    async def _worker(self):
+        """Drain the queue one job at a time — no parallel spotdl instances."""
+        while True:
+            assert self._queue is not None
+            try:
+                job_id = await asyncio.wait_for(self._queue.get(), timeout=2.0)
+            except asyncio.TimeoutError:
+                if self._queue.empty():
+                    self._worker_task = None
+                    return
+                continue
+            try:
+                await self.run_job(job_id)
+            except Exception:
+                pass
+            finally:
+                self._queue.task_done()
 
     async def cancel_job(self, job_id: str) -> bool:
         job = self.jobs.get(job_id)
@@ -167,6 +193,11 @@ class JobManager:
                 job.process.kill()
             except Exception:
                 pass
+        elif job.status == JobStatus.PENDING:
+            # Job is still waiting in the queue — mark cancelled immediately
+            job.status = JobStatus.CANCELLED
+            job.add_log('warn', 'Cancelled before starting.')
+            await self.broadcast(job)
         return True
 
     # ── Command builder ────────────────────────────────────────────────────
@@ -325,6 +356,12 @@ class JobManager:
     async def run_job(self, job_id: str):
         job = self.jobs.get(job_id)
         if not job:
+            return
+
+        if job.cancelled:
+            if job.status == JobStatus.PENDING:
+                job.status = JobStatus.CANCELLED
+                await self.broadcast(job)
             return
 
         Path(job.output_dir).mkdir(parents=True, exist_ok=True)

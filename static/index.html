@@ -697,36 +697,40 @@ let browseAt = '';
 
 const isElectron = typeof window.blotify !== 'undefined' && window.blotify.isElectron;
 
-// ── Settings persistence ───────────────────────────────────────────────────
-const SETTINGS_KEY = 'blotify_settings';
-
+// ── Settings persistence (server-side so port changes don't lose data) ────
 function saveSettings() {
-  try {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify({
-      outputDir:      document.getElementById('outputDir').value,
-      structure:      document.getElementById('structure').value,
-      audioProvider:  document.getElementById('audioProvider').value,
-      format:         document.getElementById('format').value,
-      bitrate:        document.getElementById('bitrate').value,
-      threads:        document.getElementById('threads').value,
-      overwrite:      document.getElementById('overwrite').value,
-      maxRetries:     document.getElementById('maxRetries').value,
-      initBackoff:    document.getElementById('initBackoff').value,
-      errorThreshold: document.getElementById('errorThreshold').value,
-      errorWindow:    document.getElementById('errorWindow').value,
-      cookieFile:     document.getElementById('cookieFile').value,
-      reverseOnRetry: document.getElementById('reverseRetryItem').classList.contains('checked'),
-      metaLyrics:     metaState.lyrics ?? false,
-      metaLrc:        metaState.generate_lrc ?? false,
-      advOpen:        document.getElementById('advBd').classList.contains('open'),
-      treeOpen:       document.getElementById('treeBd').classList.contains('open'),
-    }));
-  } catch(e) {}
+  const data = {
+    outputDir:      document.getElementById('outputDir').value,
+    structure:      document.getElementById('structure').value,
+    audioProvider:  document.getElementById('audioProvider').value,
+    format:         document.getElementById('format').value,
+    bitrate:        document.getElementById('bitrate').value,
+    threads:        document.getElementById('threads').value,
+    overwrite:      document.getElementById('overwrite').value,
+    maxRetries:     document.getElementById('maxRetries').value,
+    initBackoff:    document.getElementById('initBackoff').value,
+    errorThreshold: document.getElementById('errorThreshold').value,
+    errorWindow:    document.getElementById('errorWindow').value,
+    cookieFile:     document.getElementById('cookieFile').value,
+    reverseOnRetry: document.getElementById('reverseRetryItem').classList.contains('checked'),
+    metaLyrics:     metaState.lyrics ?? false,
+    metaLrc:        metaState.generate_lrc ?? false,
+    advOpen:        document.getElementById('advBd').classList.contains('open'),
+    treeOpen:       document.getElementById('treeBd').classList.contains('open'),
+  };
+  fetch('/api/settings', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data),
+  }).catch(() => {});
 }
 
-function loadSettings() {
-  try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'); }
-  catch(e) { return {}; }
+async function loadSettings() {
+  try {
+    const r = await fetch('/api/settings');
+    if (r.ok) return await r.json();
+  } catch(e) {}
+  return {};
 }
 
 function applySettings(s) {
@@ -904,7 +908,7 @@ function renderQueue() {
       </div>`;
   } else {
     list.innerHTML = '';
-    for (const id of [...jobs.keys()].reverse()) {
+    for (const id of jobs.keys()) {
       const d = document.createElement('div');
       d.id = `job-${id}`;
       list.appendChild(d);
@@ -922,7 +926,7 @@ function renderJob(id) {
   if (!el) {
     el = document.createElement('div');
     el.id = `job-${id}`;
-    document.getElementById('jobList').prepend(el);
+    document.getElementById('jobList').append(el);
   }
 
   const pct    = j.total > 0 ? Math.round(j.progress / j.total * 100) : 0;
@@ -1176,8 +1180,8 @@ function toggleReverseRetry() {
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  const saved = loadSettings();
+document.addEventListener('DOMContentLoaded', async () => {
+  const saved = await loadSettings();
   buildMeta(saved);
   applySettings(saved);
   connectWS();

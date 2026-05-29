@@ -3,7 +3,9 @@ Blotify — FastAPI backend
 """
 
 import asyncio
+import json
 import os
+import platform
 import sys
 import uuid
 from pathlib import Path
@@ -14,6 +16,21 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from downloader import DownloadJob, JobManager
+
+
+# ── Persistent settings file (survives random port changes) ───────────────
+
+def _settings_file() -> Path:
+    system = platform.system()
+    if system == 'Windows':
+        base = Path(os.environ.get('APPDATA', Path.home() / 'AppData' / 'Roaming'))
+    elif system == 'Darwin':
+        base = Path.home() / 'Library' / 'Application Support'
+    else:
+        base = Path(os.environ.get('XDG_CONFIG_HOME', Path.home() / '.config'))
+    return base / 'Blotify' / 'settings.json'
+
+SETTINGS_FILE = _settings_file()
 
 
 # ── Static-file path (works both normally and inside PyInstaller bundle) ───
@@ -104,8 +121,7 @@ async def create_job(body: dict):
         reverse_on_retry=bool(body.get('reverse_on_retry', True)),
     )
 
-    job_manager.add_job(job)
-    asyncio.create_task(job_manager.run_job(job_id))
+    await job_manager.enqueue_job(job)
     return job.to_dict()
 
 
@@ -126,6 +142,26 @@ async def clear_finished():
     for jid in done:
         del job_manager.jobs[jid]
     return {'cleared': len(done)}
+
+
+@app.get('/api/settings')
+async def get_settings():
+    try:
+        if SETTINGS_FILE.exists():
+            return json.loads(SETTINGS_FILE.read_text(encoding='utf-8'))
+    except Exception:
+        pass
+    return {}
+
+
+@app.post('/api/settings')
+async def save_settings(body: dict):
+    try:
+        SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        SETTINGS_FILE.write_text(json.dumps(body, ensure_ascii=False, indent=2), encoding='utf-8')
+        return {'ok': True}
+    except Exception as e:
+        return {'ok': False, 'error': str(e)}
 
 
 @app.get('/api/filetree')
